@@ -6,15 +6,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-func ExplorerFiles() {
-	ignoredFilePaths := map[string]bool{
-		"go.mod":        true,
-		"structure.txt": true,
-	}
-
-	filePaths, err := listFiles(".", ignoredFilePaths)
+func ExplorerFiles(rootDirectory string, ignoredFilePaths []string) {
+	filePaths, err := listFiles(rootDirectory, ignoredFilePaths)
 	var context string
 	if err != nil {
 		log.Fatalf("Failed to list files: %v", err)
@@ -31,16 +27,30 @@ func ExplorerFiles() {
 	saveToFile("./structure.txt", context)
 }
 
-func listFiles(rootDirectory string, ignoredFilePaths map[string]bool) ([]string, error) {
+func listFiles(rootDirectory string, ignoredFilePaths []string) ([]string, error) {
 	var filePaths []string
 
 	err := filepath.Walk(rootDirectory, func(path string, info os.FileInfo, err error) error {
+		ignored := false
+
 		if err != nil {
 			return err
 		}
 
-		if !info.IsDir() && !ignoredFilePaths[path] {
-			filePaths = append(filePaths, path)
+		if !info.IsDir() {
+
+			for _, ignoredFilePath := range ignoredFilePaths {
+				if strings.Contains(path, ignoredFilePath) {
+					ignored = true
+					break
+				}
+
+			}
+
+			if !ignored {
+				filePaths = append(filePaths, path)
+			}
+
 		}
 
 		return nil
